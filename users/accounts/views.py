@@ -14,7 +14,7 @@ User = get_user_model()
 
 
 class FriendRequest(APIView):
-    permission_classes = [IsAuthenticated]  # 인증이 필요 없는 엔드포인트
+    permission_classes = [IsAuthenticated]
 
     @swagger_auto_schema(tags=["친구 목록"], responses={200: FriendSerializer(many=True)})
     def get(self, request, *args, **kwargs):
