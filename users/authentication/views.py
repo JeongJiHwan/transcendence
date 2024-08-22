@@ -70,13 +70,14 @@ class OAuthCallback42(APIView):
         jwt_payload = {
             'user_id': user.id,
             'email': user.email,
-            # 'username': user.username,
+            'username': user.username,
             'exp': expiration_time,  # 만료 시간 추가
         }
         jwt_token = jwt.encode(jwt_payload, settings.SECRET_KEY, algorithm='HS256')
 
         return Response(
-            {'jwt_token': jwt_token, 'expires_in': expiration_time.strftime('%Y-%m-%dT%H:%M:%SZ')})
+            {'jwt_token': jwt_token, 'user_id': user.id, 'user_email': user.email, 'username': user.username,
+             'expires_in': expiration_time.strftime('%Y-%m-%dT%H:%M:%SZ')}, status=status.HTTP_302_FOUND)
 
     def set_refresh_token_cookie(self, response, refresh_token):
         response.set_cookie(
