@@ -3,7 +3,7 @@ python -m venv venv
 
 source venv/bin/activate
 
-pip install --upgrade pip tzdata
+pip install --upgrade tzdata
 pip install -r requirements.txt
 
 python manage.py makemigrations
