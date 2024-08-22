@@ -29,9 +29,9 @@ class OAuthCallback42(APIView):
     permission_classes = [AllowAny]  # 인증이 필요 없는 엔드포인트
 
     @swagger_auto_schema(tags=["oauth 로그인 후 처리"], query_serializer=OAuthCallbackQuerySerializer, responses={200: OAuthUserSerializer})
-    def get(self, request, code=None, *args, **kwargs):
-        if not code:
-            return Response({'error': 'No code provided'}, status=status.HTTP_400_BAD_REQUEST)
+    def get(self, request, *args, **kwargs):
+        code = request.GET.get('code')
+
         token_data = {
             'grant_type': 'authorization_code',
             'client_id': settings.CLIENT_ID,
