@@ -12,4 +12,5 @@ COPY . /usr/src/app
 
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]
 
-CMD ["sh", "entrypoint.sh"]
+ CMD ["sh", "entrypoint.sh"]
+#CMD ["sleep", "1d"]

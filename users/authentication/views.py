@@ -9,6 +9,9 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth import login
 from rest_framework.permissions import AllowAny
 from django.shortcuts import redirect
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
+from .serializers import OAuthCallbackQuerySerializer, OAuthUserSerializer
 
 User = get_user_model()
 
@@ -16,6 +19,7 @@ User = get_user_model()
 class OAuthLogin42(APIView):
     permission_classes = [AllowAny]
 
+    @swagger_auto_schema(tags=["oauth 로그인"], responses={200: openapi.Response("Redirect to 42 OAuth login page")})
     def get(self, request, *args, **kwargs):
         auth_url = f"{settings.AUTH_URL}?client_id={settings.CLIENT_ID}&redirect_uri={settings.REDIRECT_URI}&response_type=code&scope=public"
         return redirect(auth_url)
@@ -24,10 +28,11 @@ class OAuthLogin42(APIView):
 class OAuthCallback42(APIView):
     permission_classes = [AllowAny]  # 인증이 필요 없는 엔드포인트
 
-    def get(self, request, *args, **kwargs):
-        code = request.GET.get('code')
+    @swagger_auto_schema(tags=["oauth 로그인 후 처리"], query_serializer=OAuthCallbackQuerySerializer, responses={200: OAuthUserSerializer})
+    def get(self, request, code=None, *args, **kwargs):
+        if not code:
+            return Response({'error': 'No code provided'}, status=status.HTTP_400_BAD_REQUEST)
         token_data = {
-            # 'grant_type': 'client_credentials',
             'grant_type': 'authorization_code',
             'client_id': settings.CLIENT_ID,
             'client_secret': settings.CLIENT_SECRET,
@@ -37,7 +42,6 @@ class OAuthCallback42(APIView):
 
         # 42 API로 토큰 요청
         token_response = requests.post(settings.TOKEN_URL, data=token_data).json()
-        print("token_response: ", token_response)
         access_token = token_response.get('access_token')
 
         if not access_token:
@@ -76,9 +80,16 @@ class OAuthCallback42(APIView):
         }
         jwt_token = jwt.encode(jwt_payload, settings.SECRET_KEY, algorithm='HS256')
 
-        return Response(
-            {'jwt_token': jwt_token, 'user_id': user.id, 'user_email': user.email, 'username': user.username,
-             'expires_in': expiration_time.strftime('%Y-%m-%dT%H:%M:%SZ')}, status=status.HTTP_302_FOUND)
+        # Serializer를 사용하여 Response 반환
+        serializer = OAuthUserSerializer({
+            'jwt_token': jwt_token,
+            'user_id': user.id,
+            'user_email': user.email,
+            'username': user.username,
+            'expires_in': expiration_time.strftime('%Y-%m-%dT%H:%M:%SZ')
+        })
+
+        return Response(serializer.data)
 
     def set_refresh_token_cookie(self, response, refresh_token):
         response.set_cookie(
