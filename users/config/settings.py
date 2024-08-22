@@ -20,7 +20,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('SECRET_KEY','django-insecure-c7*$-!7yt@-y_r(_b-0gyxjs%90i$df#-kz-#^&cf)s35h2s0g')
+SECRET_KEY = os.environ.get('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = int(os.environ.get('DEBUG', 1))
@@ -148,8 +148,8 @@ REST_FRAMEWORK = {
 }
 
 # 42 API 클라이언트 ID 및 시크릿
-CLIENT_ID = os.environ.get('FT_CLIENT_ID', 'u-s4t2ud-7c9e12ebe5840ba1b7dab54d82744f9600da8f14acd9986a6d38ea3579a8b616')
-CLIENT_SECRET = os.environ.get('FT_CLIENT_SECRET', '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')
+CLIENT_ID = os.environ.get('FT_CLIENT_ID')
+CLIENT_SECRET = os.environ.get('FT_CLIENT_SECRET')
 REDIRECT_URI = 'http://localhost:8000/api/oauth/callback42'
 AUTH_URL = 'https://api.intra.42.fr/oauth/authorize'
 TOKEN_URL = 'https://api.intra.42.fr/oauth/token'
