@@ -4,6 +4,8 @@ services:
   users:
     build:
       context: ./users
+    container_name: ft_users
+    image: ft_users
     volumes:
       - ./users/:/usr/src/app/
     ports:
@@ -15,6 +17,7 @@ services:
 
   db:
     image: postgres:16-alpine
+    container_name: ft_db
     volumes:
       - postgres_data:/var/lib/postgresql/data
     environment:

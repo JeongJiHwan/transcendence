@@ -144,6 +144,7 @@ AUTH_USER_MODEL = 'accounts.User'
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'authentication.authentication.JWTAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
     ),
 }
 
@@ -157,3 +158,12 @@ TOKEN_URL = 'https://api.intra.42.fr/oauth/token'
 # JWT
 JWT_SECRET = os.environ.get('JWT_SECRET', 'secret')
 REFRESH_TOKEN_EXPIRATION = 60 * 60 * 24 * 30  # 30일
+
+# Sessions
+# 세션의 만료 시간 설정 (기본값: 2주)
+SESSION_COOKIE_AGE = 60 * 60 * 24 * 14  # 2 weeks in seconds
+
+# 세션 쿠키의 설정
+SESSION_COOKIE_NAME = 'sessionid'  # 기본값: sessionid
+# SESSION_COOKIE_SECURE = True  # HTTPS에서만 세션 쿠키 전송 (배포 환경에서만 사용 권장)
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True  # 브라우저 종료 시 세션 만료

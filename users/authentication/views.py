@@ -37,6 +37,7 @@ class OAuthCallback42(APIView):
 
         # 42 API로 토큰 요청
         token_response = requests.post(settings.TOKEN_URL, data=token_data).json()
+        print("token_response: ", token_response)
         access_token = token_response.get('access_token')
 
         if not access_token:
@@ -66,7 +67,7 @@ class OAuthCallback42(APIView):
         login(request, user)
 
         # Generate custom JWT with expiration time and refresh token
-        expiration_time = datetime.utcnow() + timedelta(minutes=15)  # 예: 15분 후 만료
+        expiration_time = datetime.utcnow() + timedelta(hours=1)  # 예: 15분 후 만료
         jwt_payload = {
             'user_id': user.id,
             'email': user.email,

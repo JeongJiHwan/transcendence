@@ -2,7 +2,9 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from django.contrib.auth import get_user_model
+from django.contrib.sessions.models import Session
 from rest_framework.permissions import IsAuthenticated
+from django.utils import timezone
 from .models import Friendship
 
 User = get_user_model()
@@ -15,13 +17,27 @@ class FriendRequest(APIView):
         user = request.user
 
         # 사용자가 보낸 친구 요청을 가져오기
-        friends = list(Friendship.objects.filter(from_user=user))
+        friendships = Friendship.objects.filter(from_user=user)
+
+        # 모든 세션 데이터를 한 번에 가져오기
+        session_keys = [friend.to_user.id for friend in friendships]
+        sessions = Session.objects.filter(session_key__in=session_keys, expire_date__gte=timezone.now())
+
+        # 세션 데이터를 사전 형태로 저장
+        session_dict = {session.session_key: session for session in sessions}
 
         # 결과 반환
-        friend_list = [
-            {'id': friend.to_user.id, 'username': friend.to_user.username, 'email': friend.to_user.email}
-            for friend in friends
-        ]
+        friend_list = []
+        for friend in friendships:
+            session = session_dict.get(friend.to_user.id)
+            online_status = session is not None
+            friend_info = {
+                'id': friend.to_user.id,
+                'username': friend.to_user.username,
+                'email': friend.to_user.email,
+                'online_status': online_status
+            }
+            friend_list.append(friend_info)
 
         return Response({'friends': friend_list})
 
