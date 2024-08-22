@@ -1,0 +1,26 @@
+version: '3'
+
+services:
+  users:
+    build:
+      context: ./users
+    volumes:
+      - ./users/:/usr/src/app/
+    ports:
+      - 8000:8000
+    env_file:
+      - ./users/.env.dev
+    depends_on:
+      - db
+
+  db:
+    image: postgres:16-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=ft_django
+      - POSTGRES_PASSWORD=ft_django
+      - POSTGRES_DB=ft_django
+
+volumes:
+  postgres_data:
