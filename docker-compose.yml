@@ -6,8 +6,6 @@ services:
       context: ./users
     container_name: ft_users
     image: ft_users
-    volumes:
-      - ./users/:/usr/src/app/
     ports:
       - 8000:8000
     env_file:
