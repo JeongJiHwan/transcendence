@@ -24,10 +24,17 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class FriendSerializer(serializers.Serializer):
-    id = serializers.IntegerField()
-    username = serializers.CharField()
-    email = serializers.EmailField()
     online_status = serializers.BooleanField()
+
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'email', 'online_status']
+
+    def to_representation(self, instance):
+        # Override to include online_status in representation
+        representation = super().to_representation(instance)
+        representation['online_status'] = self.context['online_status'][instance.id]
+        return representation
 
 
 class FriendRequestSerializer(serializers.Serializer):

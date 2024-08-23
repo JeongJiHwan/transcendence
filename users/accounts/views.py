@@ -38,7 +38,11 @@ class UserProfileView(APIView):
 class FriendRequest(APIView):
     permission_classes = [IsAuthenticated]
 
-    @swagger_auto_schema(tags=["친구 관리 기능"], operation_description='친구 목록 조회', responses={200: FriendSerializer(many=True)})
+    @swagger_auto_schema(
+        tags=["친구 관리 기능"],
+        operation_description='친구 목록 조회',
+        responses={200: FriendSerializer(many=True)},
+    )
     def get(self, request, *args, **kwargs):
         user = request.user
 
@@ -50,28 +54,27 @@ class FriendRequest(APIView):
         sessions = Session.objects.filter(session_key__in=session_keys, expire_date__gte=timezone.now())
 
         # 세션 데이터를 사전 형태로 저장
-        session_dict = {session.session_key: session for session in sessions}
+        session_dict = {session.session_key: True for session in sessions}
 
-        # 결과 반환
+        # 결과 반환을 위한 데이터 구성
         friend_list = []
         for friend in friendships:
-            session = session_dict.get(friend.to_user.id)
-            online_status = session is not None
+            online_status = session_dict.get(friend.to_user.id, False)
             friend_data = {
                 'id': friend.to_user.id,
                 'username': friend.to_user.username,
                 'email': friend.to_user.email,
                 'online_status': online_status
             }
-            # Serializer를 사용하여 데이터 직렬화
-            serializer = FriendSerializer(friend_data)
-            friend_list.append(serializer.data)
+            friend_list.append(friend_data)
 
-        return Response({'friends': friend_list})
+        # Serializer를 사용하여 데이터 직렬화
+        serializer = FriendSerializer(friend_list, many=True, context={'online_status': session_dict})
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     @swagger_auto_schema(tags=["친구 관리 기능"], operatio_description='친구 추가', request_body=FriendRequestSerializer, responses={201: openapi.Response("Friend request sent successfully")})
     def post(self, request, *args, **kwargs):
-        serializer = FriendRequestSerializer(data=request.data)
+        serializer = FriendRequestSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
             try:
                 from_user = request.user
