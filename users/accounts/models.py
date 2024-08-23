@@ -8,6 +8,7 @@ from .managers import UserManager
 class User(AbstractUser):
     username = models.CharField(max_length=50, blank=True)
     email = models.EmailField(_('email address'), unique=True)
+    avatar = models.ImageField(upload_to='accounts/avatars/%Y/%m/%d', null=True, blank=True)
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
@@ -44,11 +45,3 @@ class Friendship(models.Model):
         friendship.save()
 
         return friendship
-
-
-class Profile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-    avatar = models.ImageField(upload_to='accounts/avatars/%Y/%m/%d', null=True, blank=True)
-
-    def __str__(self):
-        return self.user.email

@@ -1,7 +1,6 @@
 from django.contrib import admin
-from .models import User, Friendship, Profile
+from .models import User, Friendship
 
 # Register your models here.
 admin.site.register(User)
 admin.site.register(Friendship)
-admin.site.register(Profile)

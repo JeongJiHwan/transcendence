@@ -4,7 +4,7 @@ from django.contrib.auth import get_user_model
 User = get_user_model()
 
 
-class UserProfileSerializer(serializers.Serializer):
+class UserSerializer(serializers.ModelSerializer):
     avatar = serializers.SerializerMethodField()
 
     class Meta:
@@ -12,15 +12,14 @@ class UserProfileSerializer(serializers.Serializer):
         fields = ['id', 'username', 'email', 'avatar']
 
     def get_avatar(self, obj):
-        if obj.avatar:
+        if obj.avatar and hasattr(obj.avatar, 'url'):
             return self.context['request'].build_absolute_uri(obj.avatar.url)
         return None
 
     def to_representation(self, instance):
         ret = super().to_representation(instance)
-        ret['id'] = instance.user.id
-        ret['username'] = instance.user.username
-        ret['email'] = instance.user.email
+        if ret['avatar'] is None:
+            ret['avatar'] = None  # Ensure that if avatar is None, it is explicitly set to None
         return ret
 
 

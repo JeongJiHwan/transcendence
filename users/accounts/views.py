@@ -1,16 +1,16 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from django.shortcuts import get_object_or_404
 from django.contrib.auth import get_user_model
 from django.contrib.sessions.models import Session
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.parsers import MultiPartParser, FormParser
 from django.utils import timezone
-from .models import Friendship, Profile
-from .serializers import FriendSerializer, FriendRequestSerializer, AvatarUploadSerializer
+from .models import Friendship
+from .serializers import UserSerializer, FriendSerializer, FriendRequestSerializer, AvatarUploadSerializer
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
-from .serializers import UserProfileSerializer
 
 User = get_user_model()
 
@@ -18,12 +18,20 @@ User = get_user_model()
 class UserProfileView(APIView):
     permission_classes = [IsAuthenticated]
 
-    @swagger_auto_schema(tags=["프로필"], operation_description='프로필 조회', responses={200: UserProfileSerializer})
-    def get(self, request, *args, **kwargs):
-        user = request.user
-        profile = Profile.objects.get(user=user)
+    @swagger_auto_schema(
+        tags=["프로필"],
+        operation_description='유저 프로필 조회 (자신 또는 다른 사용자)',
+        responses={200: UserSerializer}
+    )
+    def get(self, request, user_id=None, *args, **kwargs):
+        if user_id:
+            # 다른 사용자의 정보를 가져오기 위해 user_id를 사용하여 User 인스턴스를 가져옴
+            user = get_object_or_404(User, pk=user_id)
+        else:
+            # user_id가 제공되지 않은 경우 현재 사용자의 정보를 가져옴
+            user = request.user
 
-        serializer = UserProfileSerializer(profile, context={'request': request})
+        serializer = UserSerializer(instance=user, context={'request': request})
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
@@ -111,12 +119,10 @@ class AvatarUploadView(APIView):
         serializer = AvatarUploadSerializer(data=request.data)
         if serializer.is_valid():
             avatar_file = serializer.validated_data['avatar']
-            # 프로필 가져오기 또는 생성하기
-            profile, created = Profile.objects.get_or_create(user=user)
 
             # 아바타 업데이트
-            profile.avatar = avatar_file
-            profile.save()
+            user.avatar = avatar_file
+            user.save()
 
             return Response({'message': 'Avatar uploaded successfully'})
         else:
