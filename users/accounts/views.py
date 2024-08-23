@@ -10,8 +10,21 @@ from .models import Friendship, Profile
 from .serializers import FriendSerializer, FriendRequestSerializer, AvatarUploadSerializer
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
+from .serializers import UserProfileSerializer
 
 User = get_user_model()
+
+
+class UserProfileView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @swagger_auto_schema(tags=["프로필"], operation_description='프로필 조회', responses={200: UserProfileSerializer})
+    def get(self, request, *args, **kwargs):
+        user = request.user
+        profile = Profile.objects.get(user=user)
+
+        serializer = UserProfileSerializer(profile, context={'request': request})
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class FriendRequest(APIView):
