@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Upload Test</title>
+</head>
+<body>
+    <h2>Avatar Upload</h2>
+    <form id="uploadForm" enctype="multipart/form-data">
+        <input type="file" id="avatarInput" name="avatar">
+        <button type="button" onclick="uploadAvatar()">Upload Avatar</button>
+    </form>
+
+    <div id="message"></div>
+
+    <script>
+        function uploadAvatar() {
+            let form = document.getElementById('uploadForm');
+            let formData = new FormData(form);
+
+            let jwtToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxLCJ1c2VyX2VtYWlsIjoiamlod2plb25Ac3R1ZGVudC40MnNlb3VsLmtyIiwidXNlcm5hbWUiOiJqaWh3amVvbiIsImV4cCI6MTcyNDQ3MzI2N30.rPVTXW8gmzmpKF-aiLelPhbMOiB3w0kD2lzGrJ8UsDA';
+            fetch('http://localhost:8000/api/accounts/avatar', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'Authorization': `Bearer ${jwtToken}`
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('message').innerText = data.message;
+            })
+            .catch(error => {
+                console.error('Error uploading avatar:', error);
+            });
+        }
+    </script>
+</body>
+</html>

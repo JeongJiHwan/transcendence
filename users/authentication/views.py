@@ -95,14 +95,14 @@ class TokenRefresh(APIView):
     def post(self, request, *args, **kwargs):
         refresh_token = request.COOKIES.get('refresh_token')
         if not refresh_token:
-            return Response({'error': 'No refresh token'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'No refresh token'}, status=status.HTTP_401_UNAUTHORIZED)
 
         try:
             payload = jwt.decode(refresh_token, settings.SECRET_KEY, algorithms=['HS256'])
         except jwt.ExpiredSignatureError:
-            return Response({'error': 'Refresh token expired'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'Refresh token expired'}, status=status.HTTP_401_UNAUTHORIZED)
         except jwt.InvalidTokenError:
-            return Response({'error': 'Invalid refresh token'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'Invalid refresh token'}, status=status.HTTP_401_UNAUTHORIZED)
 
         user_id = payload.get('user_id')
         user = User.objects.get(id=user_id)

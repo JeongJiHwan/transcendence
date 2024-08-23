@@ -44,3 +44,11 @@ class Friendship(models.Model):
         friendship.save()
 
         return friendship
+
+
+class Profile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    avatar = models.ImageField(upload_to='accounts/avatars/%Y/%m/%d', null=True, blank=True)
+
+    def __str__(self):
+        return self.user.email

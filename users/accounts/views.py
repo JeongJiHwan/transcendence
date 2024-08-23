@@ -4,9 +4,10 @@ from rest_framework import status
 from django.contrib.auth import get_user_model
 from django.contrib.sessions.models import Session
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.parsers import MultiPartParser, FormParser
 from django.utils import timezone
-from .models import Friendship
-from .serializers import FriendSerializer, FriendRequestSerializer
+from .models import Friendship, Profile
+from .serializers import FriendSerializer, FriendRequestSerializer, AvatarUploadSerializer
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 
@@ -79,3 +80,30 @@ class FriendRequest(APIView):
             return Response({'error': 'Friendship does not exist'}, status=status.HTTP_404_NOT_FOUND)
 
         return Response({'message': 'Friendship deleted successfully'}, status=status.HTTP_204_NO_CONTENT)
+
+
+class AvatarUploadView(APIView):
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
+
+    @swagger_auto_schema(
+        tags=["프로필"],
+        request_body=AvatarUploadSerializer,
+        responses={200: openapi.Response("Avatar uploaded successfully")}
+    )
+    def post(self, request, *args, **kwargs):
+        user = request.user
+
+        serializer = AvatarUploadSerializer(data=request.data)
+        if serializer.is_valid():
+            avatar_file = serializer.validated_data['avatar']
+            # 프로필 가져오기 또는 생성하기
+            profile, created = Profile.objects.get_or_create(user=user)
+
+            # 아바타 업데이트
+            profile.avatar = avatar_file
+            profile.save()
+
+            return Response({'message': 'Avatar uploaded successfully'})
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

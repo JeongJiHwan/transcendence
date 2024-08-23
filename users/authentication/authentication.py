@@ -13,13 +13,17 @@ class JWTAuthentication(BaseAuthentication):
         auth_header = request.headers.get('Authorization')
 
         if not auth_header or not auth_header.startswith('Bearer '):
-            return None
+            # 헤더가 없는 경우에 대한 처리
+            if self.is_public_endpoint(request):
+                return None  # 인증이 필요 없는 엔드포인트에서는 None 반환
+            else:
+                raise AuthenticationFailed('Authorization header is missing')
 
         token = auth_header.split()[1]
 
         try:
             # JWT를 검증하고 페이로드를 디코딩
-            payload = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
+            payload = jwt.decode(token, settings.JWT_SECRET, algorithms=['HS256'])
 
             # 페이로드에서 사용자 정보 추출
             user_id = payload['user_id']
@@ -35,3 +39,15 @@ class JWTAuthentication(BaseAuthentication):
 
     def authenticate_header(self, request):
         return 'Bearer'
+
+    def is_public_endpoint(self, request):
+        """
+        해당 요청이 인증이 필요 없는 엔드포인트인지 확인합니다.
+        """
+        public_endpoints = ['/api/oauth', '/swagger']  # 예시: 인증이 필요 없는 엔드포인트 목록
+
+        for endpoint in public_endpoints:
+            if request.path.startswith(endpoint):
+                return True
+
+        return False

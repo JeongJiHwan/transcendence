@@ -15,3 +15,7 @@ class FriendRequestSerializer(serializers.Serializer):
         if value == self.context['request'].user.id:
             raise serializers.ValidationError('You cannot send a friend request to yourself')
         return value
+
+
+class AvatarUploadSerializer(serializers.Serializer):
+    avatar = serializers.FileField()
