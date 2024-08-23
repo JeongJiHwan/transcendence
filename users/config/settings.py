@@ -41,14 +41,16 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
-    'rest_framework',
+    'corsheaders'
     'drf_yasg',
+    'rest_framework',
 
     'accounts',
     'authentication',
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -168,3 +170,8 @@ SESSION_COOKIE_AGE = 60 * 60 * 24 * 14  # 2 weeks in seconds
 SESSION_COOKIE_NAME = 'sessionid'  # 기본값: sessionid
 # SESSION_COOKIE_SECURE = True  # HTTPS에서만 세션 쿠키 전송 (배포 환경에서만 사용 권장)
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True  # 브라우저 종료 시 세션 만료
+
+CORS_ORIGIN_WHITELIST = [
+    'http://localhost:1212',
+    'http://localhost:8000',
+]
