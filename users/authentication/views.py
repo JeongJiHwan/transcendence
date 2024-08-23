@@ -11,7 +11,7 @@ from django.shortcuts import redirect
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from .serializers import OAuthCallbackQuerySerializer, OAuthUserSerializer
-from .utils import TokenGenerator
+from .utils import TokenProvider
 
 User = get_user_model()
 
@@ -71,7 +71,8 @@ class OAuthCallback42(APIView):
         login(request, user)
 
         # Generate custom JWT with expiration time and refresh token
-        jwt_token = TokenGenerator.generate_jwt_token(user)
+        jwt_token = TokenProvider.generate_jwt_token(user)
+        refresh_token = TokenProvider.generate_refresh_token(user)
 
         # Serializer를 사용하여 Response 반환
         serializer = OAuthUserSerializer({
@@ -81,17 +82,10 @@ class OAuthCallback42(APIView):
             'username': user.username,
         })
 
-        return Response(serializer.data)
+        response = Response(serializer.data, status=status.HTTP_200_OK)
+        TokenProvider.set_refresh_token_cookie(response, refresh_token)
 
-    def set_refresh_token_cookie(self, response, refresh_token):
-        response.set_cookie(
-            key='refresh_token',
-            value=refresh_token,
-            max_age=settings.REFRESH_TOKEN_EXPIRATION,  # 쿠키 만료 시간 설정
-            secure=True,  # HTTPS 연결에서만 쿠키 전송
-            httponly=True,  # JavaScript에서 쿠키 접근 불가능
-            samesite='Strict'  # CSRF 공격 방지를 위해 SameSite 설정
-        )
+        return response
 
 
 class TokenRefresh(APIView):
@@ -114,7 +108,8 @@ class TokenRefresh(APIView):
         user = User.objects.get(id=user_id)
 
         # Generate custom JWT with expiration time and refresh token
-        jwt_token = TokenGenerator.generate_jwt_token(user)
+        jwt_token = TokenProvider.generate_jwt_token(user)
+        refresh_token = TokenProvider.generate_refresh_token(user)
 
         serializer = OAuthUserSerializer({
             'jwt_token': jwt_token,
@@ -122,4 +117,7 @@ class TokenRefresh(APIView):
             'user_email': user.email,
             'username': user.username,
         })
-        return Response(serializer.data, status=status.HTTP_200_OK)
+
+        response = Response(serializer.data, status=status.HTTP_200_OK)
+        TokenProvider.set_refresh_token_cookie(response, refresh_token)
+        return response

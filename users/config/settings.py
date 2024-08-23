@@ -154,13 +154,15 @@ REST_FRAMEWORK = {
 # 42 API 클라이언트 ID 및 시크릿
 CLIENT_ID = os.environ.get('FT_CLIENT_ID')
 CLIENT_SECRET = os.environ.get('FT_CLIENT_SECRET')
-REDIRECT_URI = 'http://localhost:1212/login'
+REDIRECT_URI = 'http://localhost:1212/list'
 # REDIRECT_URI = 'http://localhost:8000/api/oauth/callback42'
 AUTH_URL = 'https://api.intra.42.fr/oauth/authorize'
 TOKEN_URL = 'https://api.intra.42.fr/oauth/token'
 
 # JWT
 JWT_SECRET = os.environ.get('JWT_SECRET', 'secret')
+REFRESH_SECRET = os.environ.get('REFRESH_SECRET', 'refresh')
+JWT_TOKEN_EXPIRATION = 60 * 60 * 24  # 24시간
 REFRESH_TOKEN_EXPIRATION = 60 * 60 * 24 * 30  # 30일
 
 # Sessions
