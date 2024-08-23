@@ -19,7 +19,9 @@ User = get_user_model()
 class OAuthLogin42(APIView):
     permission_classes = [AllowAny]
 
-    @swagger_auto_schema(tags=["oauth 로그인"], responses={200: openapi.Response("Redirect to 42 OAuth login page")})
+    @swagger_auto_schema(tags=["oauth 기능"],
+                         operation_description='42 OAuth 로그인 페이지로 리다이렉트',
+                         responses={200: openapi.Response("Redirect to 42 OAuth login page")})
     def get(self, request, *args, **kwargs):
         auth_url = f"{settings.AUTH_URL}?client_id={settings.CLIENT_ID}&redirect_uri={settings.REDIRECT_URI}&response_type=code&scope=public"
         return redirect(auth_url)
@@ -28,7 +30,9 @@ class OAuthLogin42(APIView):
 class OAuthCallback42(APIView):
     permission_classes = [AllowAny]  # 인증이 필요 없는 엔드포인트
 
-    @swagger_auto_schema(tags=["oauth 로그인 후 처리"], query_serializer=OAuthCallbackQuerySerializer, responses={200: OAuthUserSerializer})
+    @swagger_auto_schema(tags=["oauth 기능"],
+                         operation_description='42 OAuth 콜백 처리',
+                         query_serializer=OAuthCallbackQuerySerializer, responses={200: OAuthUserSerializer})
     def get(self, request, *args, **kwargs):
         code = request.GET.get('code')
 
@@ -91,7 +95,9 @@ class OAuthCallback42(APIView):
 class TokenRefresh(APIView):
     permission_classes = [AllowAny]  # 인증이 필요 없는 엔드포인트
 
-    @swagger_auto_schema(tags=["토큰 재발급"], responses={200: OAuthUserSerializer})
+    @swagger_auto_schema(tags=["oauth 기능"],
+                         operation_description='Refresh token을 이용하여 JWT 토큰 재발급',
+                         responses={200: OAuthUserSerializer})
     def post(self, request, *args, **kwargs):
         refresh_token = request.COOKIES.get('refresh_token')
         if not refresh_token:

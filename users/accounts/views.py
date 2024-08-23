@@ -17,7 +17,7 @@ User = get_user_model()
 class FriendRequest(APIView):
     permission_classes = [IsAuthenticated]
 
-    @swagger_auto_schema(tags=["친구 목록"], responses={200: FriendSerializer(many=True)})
+    @swagger_auto_schema(tags=["친구 관리 기능"], operation_description='친구 목록 조회', responses={200: FriendSerializer(many=True)})
     def get(self, request, *args, **kwargs):
         user = request.user
 
@@ -48,7 +48,7 @@ class FriendRequest(APIView):
 
         return Response({'friends': friend_list})
 
-    @swagger_auto_schema(tags=["친구 요청"], request_body=FriendRequestSerializer, responses={201: openapi.Response("Friend request sent successfully")})
+    @swagger_auto_schema(tags=["친구 관리 기능"], operatio_description='친구 추가', request_body=FriendRequestSerializer, responses={201: openapi.Response("Friend request sent successfully")})
     def post(self, request, *args, **kwargs):
         serializer = FriendRequestSerializer(data=request.data)
         if serializer.is_valid():
@@ -62,7 +62,7 @@ class FriendRequest(APIView):
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @swagger_auto_schema(tags=["친구 요청 취소"], request_body=FriendRequestSerializer, responses={204: openapi.Response("Friend request canceled successfully")})
+    @swagger_auto_schema(tags=["친구 관리 기능"], operation_description='친구 삭제', request_body=FriendRequestSerializer, responses={204: openapi.Response("Friend request canceled successfully")})
     def delete(self, request, *args, **kwargs):
         serializer = FriendRequestSerializer(data=request.data)
         try:
@@ -88,6 +88,7 @@ class AvatarUploadView(APIView):
 
     @swagger_auto_schema(
         tags=["프로필"],
+        operation_description='아바타 업로드',
         request_body=AvatarUploadSerializer,
         responses={200: openapi.Response("Avatar uploaded successfully")}
     )
