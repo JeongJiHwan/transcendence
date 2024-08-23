@@ -1,6 +1,5 @@
 import requests
 import jwt
-from datetime import datetime, timedelta
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -12,6 +11,7 @@ from django.shortcuts import redirect
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from .serializers import OAuthCallbackQuerySerializer, OAuthUserSerializer
+from .utils import TokenGenerator
 
 User = get_user_model()
 
@@ -55,9 +55,9 @@ class OAuthCallback42(APIView):
         if not user_data_response:
             return Response({'error': 'Invalid user data response'}, status=status.HTTP_400_BAD_REQUEST)
 
-        email = user_data_response['email']
-        username = user_data_response['login']
         try:
+            email = user_data_response['email']
+            username = user_data_response['login']
             user, created = User.objects.get_or_create(
                 email=email,
                 username=username
@@ -71,14 +71,7 @@ class OAuthCallback42(APIView):
         login(request, user)
 
         # Generate custom JWT with expiration time and refresh token
-        expiration_time = datetime.utcnow() + timedelta(hours=1)  # 예: 15분 후 만료
-        jwt_payload = {
-            'user_id': user.id,
-            'email': user.email,
-            'username': user.username,
-            'exp': expiration_time,  # 만료 시간 추가
-        }
-        jwt_token = jwt.encode(jwt_payload, settings.SECRET_KEY, algorithm='HS256')
+        jwt_token = TokenGenerator.generate_jwt_token(user)
 
         # Serializer를 사용하여 Response 반환
         serializer = OAuthUserSerializer({
@@ -86,7 +79,6 @@ class OAuthCallback42(APIView):
             'user_id': user.id,
             'user_email': user.email,
             'username': user.username,
-            'expires_in': expiration_time.strftime('%Y-%m-%dT%H:%M:%SZ')
         })
 
         return Response(serializer.data)
@@ -100,3 +92,34 @@ class OAuthCallback42(APIView):
             httponly=True,  # JavaScript에서 쿠키 접근 불가능
             samesite='Strict'  # CSRF 공격 방지를 위해 SameSite 설정
         )
+
+
+class TokenRefresh(APIView):
+    permission_classes = [AllowAny]  # 인증이 필요 없는 엔드포인트
+
+    @swagger_auto_schema(tags=["토큰 재발급"], responses={200: OAuthUserSerializer})
+    def post(self, request, *args, **kwargs):
+        refresh_token = request.COOKIES.get('refresh_token')
+        if not refresh_token:
+            return Response({'error': 'No refresh token'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            payload = jwt.decode(refresh_token, settings.SECRET_KEY, algorithms=['HS256'])
+        except jwt.ExpiredSignatureError:
+            return Response({'error': 'Refresh token expired'}, status=status.HTTP_400_BAD_REQUEST)
+        except jwt.InvalidTokenError:
+            return Response({'error': 'Invalid refresh token'}, status=status.HTTP_400_BAD_REQUEST)
+
+        user_id = payload.get('user_id')
+        user = User.objects.get(id=user_id)
+
+        # Generate custom JWT with expiration time and refresh token
+        jwt_token = TokenGenerator.generate_jwt_token(user)
+
+        serializer = OAuthUserSerializer({
+            'jwt_token': jwt_token,
+            'user_id': user.id,
+            'user_email': user.email,
+            'username': user.username,
+        })
+        return Response(serializer.data, status=status.HTTP_200_OK)

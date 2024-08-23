@@ -10,4 +10,3 @@ class OAuthUserSerializer(serializers.Serializer):
     user_id = serializers.IntegerField()
     user_email = serializers.EmailField()
     username = serializers.CharField()
-    expires_in = serializers.DateTimeField()
