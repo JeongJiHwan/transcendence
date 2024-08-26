@@ -159,7 +159,7 @@ REST_FRAMEWORK = {
 # 42 API 클라이언트 ID 및 시크릿
 CLIENT_ID = os.environ.get('FT_CLIENT_ID')
 CLIENT_SECRET = os.environ.get('FT_CLIENT_SECRET')
-REDIRECT_URI = 'http://localhost:1212/list'
+REDIRECT_URI = 'http://localhost:1212/auth'
 # REDIRECT_URI = 'http://localhost:8000/api/oauth/callback42'
 AUTH_URL = 'https://api.intra.42.fr/oauth/authorize'
 TOKEN_URL = 'https://api.intra.42.fr/oauth/token'

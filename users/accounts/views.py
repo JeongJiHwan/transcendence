@@ -116,14 +116,18 @@ class AvatarUploadView(APIView):
         request_body=AvatarUploadSerializer,
         responses={200: openapi.Response("Avatar uploaded successfully")}
     )
-    def post(self, request, *args, **kwargs):
+    def patch(self, request, *args, **kwargs):
         user = request.user
 
         serializer = AvatarUploadSerializer(data=request.data)
         if serializer.is_valid():
             avatar_file = serializer.validated_data['avatar']
 
-            # 아바타 업데이트
+            # Delete existing avatar if it exists
+            if user.avatar:
+                user.avatar.delete()
+
+            # Update avatar with new file
             user.avatar = avatar_file
             user.save()
 
