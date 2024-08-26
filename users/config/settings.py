@@ -152,7 +152,7 @@ AUTH_USER_MODEL = 'accounts.User'
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'authentication.authentication.JWTAuthentication',
-        'rest_framework.authentication.SessionAuthentication',
+        # 'rest_framework.authentication.SessionAuthentication',
     ),
 }
 
@@ -193,3 +193,13 @@ EMAIL_HOST_USER = os.environ.get("EMAIL")
 EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_PASSWORD")
 EMAIL_USE_TLS = True
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+
+SWAGGER_SETTINGS = {
+    "DEFAULT_INFO": "obab.urls.api_info",
+    "USE_SESSION_AUTH": False,
+    "VALIDATOR_URL": None,
+    "SECURITY_DEFINITIONS": {
+        "Bearer": {"type": "apiKey", "name": "Authorization", "in": "header"}
+    },
+}
