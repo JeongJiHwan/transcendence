@@ -10,7 +10,15 @@ RUN apk update \
 
 COPY . /usr/src/app
 
+# Install dependencies
+RUN python -m venv venv
+
+RUN source venv/bin/activate
+
+RUN pip install pip==21.0.1
+RUN pip install -r requirements.txt
+
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]
 
- CMD ["sh", "entrypoint.sh"]
+CMD ["sh", "entrypoint.sh"]
 #CMD ["sleep", "1d"]

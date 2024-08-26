@@ -7,11 +7,15 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth import login
 from rest_framework.permissions import AllowAny
-from django.shortcuts import redirect
+from django.shortcuts import redirect, get_object_or_404
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
-from .serializers import OAuthCallbackQuerySerializer, OAuthUserSerializer
+from .serializers import OAuthCallbackQuerySerializer, OAuthUserSerializer, VerificationCodeSerializer
 from .utils import TokenProvider
+from .models import EmailVerify
+from django.core.mail import EmailMessage
+from django.utils.crypto import get_random_string
+
 
 User = get_user_model()
 
@@ -32,7 +36,7 @@ class OAuthCallback42(APIView):
 
     @swagger_auto_schema(tags=["oauth 기능"],
                          operation_description='42 OAuth 콜백 처리',
-                         query_serializer=OAuthCallbackQuerySerializer, responses={200: OAuthUserSerializer})
+                         query_serializer=OAuthCallbackQuerySerializer, responses={200: openapi.Response("Email")})
     def get(self, request, *args, **kwargs):
         code = request.GET.get('code')
 
@@ -71,25 +75,26 @@ class OAuthCallback42(APIView):
             print(f"User creation failed: {e}")
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        # 로그인 처리
-        login(request, user)
-
-        # Generate custom JWT with expiration time and refresh token
-        jwt_token = TokenProvider.generate_jwt_token(user)
-        refresh_token = TokenProvider.generate_refresh_token(user)
-
-        # Serializer를 사용하여 Response 반환
-        serializer = OAuthUserSerializer({
-            'jwt_token': jwt_token,
-            'user_id': user.id,
-            'user_email': user.email,
-            'username': user.username,
-        })
-
-        response = Response(serializer.data, status=status.HTTP_200_OK)
-        TokenProvider.set_refresh_token_cookie(response, refresh_token)
-
-        return response
+        try:
+            code = EmailVerify.objects.filter(email=email)
+            print("after verify filtering: ", email)
+            if code.exists():
+                code.delete()
+            verification_code = get_random_string(length=6)
+            message = f"인증코드는 {verification_code}  입니다"
+            email_message = EmailMessage(
+                subject='Verification Code',
+                body=message,
+                to=[email],
+            )
+            verify_code = EmailVerify(email=email, code=verification_code)
+            verify_code.save()
+            print("verify_code: ", verify_code)
+            email_message.send()  # 이메일 전송
+        except Exception as e:
+            print(f"Email sending failed: {e}")
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({'email': email}, status=status.HTTP_200_OK)  # 인증 코드 반환
 
 
 class TokenRefresh(APIView):
@@ -126,4 +131,37 @@ class TokenRefresh(APIView):
 
         response = Response(serializer.data, status=status.HTTP_200_OK)
         TokenProvider.set_refresh_token_cookie(response, refresh_token)
+        return response
+
+
+class EmailVerifyView(APIView):
+    permission_classes = [AllowAny]
+
+    @swagger_auto_schema(tags=["oauth 기능"],
+                         operation_description='이메일 인증 코드 확인',
+                         request_body=VerificationCodeSerializer, responses={200: OAuthUserSerializer})
+    def post(self, request, *args, **kwargs):
+        serializer = VerificationCodeSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        user = get_object_or_404(User, email=serializer.validated_data['email'])
+
+        # 로그인 처리
+        login(request, user)
+
+        # Generate custom JWT with expiration time and refresh token
+        jwt_token = TokenProvider.generate_jwt_token(user)
+        refresh_token = TokenProvider.generate_refresh_token(user)
+
+        # Serializer를 사용하여 Response 반환
+        serializer = OAuthUserSerializer({
+            'jwt_token': jwt_token,
+            'user_id': user.id,
+            'user_email': user.email,
+            'username': user.username,
+        })
+
+        response = Response(serializer.data, status=status.HTTP_200_OK)
+        TokenProvider.set_refresh_token_cookie(response, refresh_token)
+
         return response
